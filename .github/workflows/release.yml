@@ -1,0 +1,59 @@
+name: Build and publish KernelSU module
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify all module files are present
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in module.prop README.txt common.sh post-fs-data.sh service.sh action.sh uninstall.sh customize.sh background.png icon.png skip_mount; do
+            test -f "$f" || { echo "Missing file: $f"; exit 1; }
+          done
+          test -s background.png
+          test -s icon.png
+          grep -qx 'id=disable_services' module.prop
+
+      - name: Build installable ZIP from module files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED, ZipInfo
+          names = ('module.prop', 'README.txt', 'common.sh', 'customize.sh',
+                   'post-fs-data.sh', 'service.sh', 'action.sh', 'uninstall.sh',
+                   'background.png', 'icon.png', 'skip_mount')
+          out = Path('Disable_Services_KernelSU_v2.2.zip')
+          with ZipFile(out, 'w', ZIP_DEFLATED, compresslevel=9) as z:
+              for name in names:
+                  data = Path(name).read_bytes()
+                  zi = ZipInfo(name)
+                  executable = name.endswith('.sh')
+                  zi.create_system = 3
+                  zi.external_attr = (0o100755 if executable else 0o100644) << 16
+                  zi.compress_type = ZIP_DEFLATED
+                  z.writestr(zi, data, compress_type=ZIP_DEFLATED, compresslevel=9)
+          print(out, out.stat().st_size, 'bytes')
+          PY
+
+      - name: Publish release v2.2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create v2.2 Disable_Services_KernelSU_v2.2.zip \
+            --title 'Disable Services v2.2' \
+            --notes-file CHANGELOG.md \
+            --target "$GITHUB_SHA"
