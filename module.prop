@@ -1,0 +1,9 @@
+id=disable_services
+name=Disable Services ⚙️
+version=2.2
+versionCode=22
+author=msRedwin
+description=Disables the DT2W function and stops Xiaomi MLiPay, Tencent Soter, and Vendor ATrace init services without modifying the vendor partition.
+banner=background.png
+actionIcon=icon.png
+support=https://github.com/msRedwin
