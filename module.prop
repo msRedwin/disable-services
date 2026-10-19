@@ -7,3 +7,4 @@ description=Disables the DT2W function and stops Xiaomi MLiPay, Tencent Soter, a
 banner=background.png
 actionIcon=icon.png
 support=https://github.com/msRedwin
+updateJson=https://raw.githubusercontent.com/msRedwin/disable-services/main/update.json
